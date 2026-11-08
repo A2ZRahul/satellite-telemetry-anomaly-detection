@@ -1,54 +1,86 @@
 # Satellite Telemetry Anomaly Detection
 
-A Python-based project exploring anomaly detection in synthetic satellite telemetry. The project combines temporal feature engineering, an Isolation Forest baseline, and rule-based detectors for drift, frozen readings, and spikes.
+A Python-based machine learning project exploring anomaly detection in synthetic satellite telemetry. The project combines temporal feature engineering, an Isolation Forest baseline, and rule-based detectors to identify unusual patterns such as gradual drift, frozen sensor readings, and sudden spikes.
 
-> **Status:** Exploratory portfolio project. Reported metrics are preliminary diagnostics, not an unbiased estimate of performance on unseen data.
+> **Project status:** Exploratory portfolio project. Reported metrics are development diagnostics, not an unbiased estimate of performance on unseen data.
 
-## Project objective
+## 1. Project Objective
 
-Satellite telemetry can contain unusual patterns that may indicate sensor or system anomalies. This project explores how telemetry time series can be analysed to identify:
+Satellite telemetry consists of measurements collected from different onboard sensors and subsystems. Unusual patterns in these measurements may indicate sensor faults or abnormal system behaviour.
 
-- **Drift:** gradual or sustained changes in a telemetry signal.
-- **Freeze:** readings that remain unchanged for an extended period.
-- **Spike:** sudden changes that reverse in the following sample.
+This project explores how multivariate time-series data can be analysed to identify three types of anomalies:
 
-The dataset is synthetic; the results should not be interpreted as validation on real spacecraft telemetry.
+- **Drift:** Gradual or sustained changes in a telemetry signal.
+- **Freeze:** Sensor readings that remain unchanged for an extended period.
+- **Spike:** Sudden changes that reverse in the following sample.
 
-## Dataset
+The project uses synthetic data for experimentation. Its results should not be interpreted as validation on real spacecraft telemetry.
 
-The dataset contains 20,000 timesteps, seven telemetry channels, and anomaly labels.
+## 2. Dataset
 
-Telemetry channels:
+The synthetic dataset contains **20,000 timesteps**, seven telemetry channels, and anomaly labels.
 
-- `temperature`
-- `voltage`
-- `current`
-- `battery_level`
-- `orientation_x`
-- `orientation_y`
-- `orientation_z`
+### Telemetry features
 
-Additional columns include `timestep`, `anomaly`, and `anomaly_type`. The dataset contains 582 labelled anomalies (2.91%).
+| Feature | Description |
+|---|---|
+| `temperature` | Temperature measurement |
+| `voltage` | Voltage measurement |
+| `current` | Current measurement |
+| `battery_level` | Battery-level measurement |
+| `orientation_x` | X-axis orientation |
+| `orientation_y` | Y-axis orientation |
+| `orientation_z` | Z-axis orientation |
 
-## Methodology
+Additional columns:
 
-### 1. Temporal feature engineering
+- `timestep`: Time-step index.
+- `anomaly`: Binary anomaly label.
+- `anomaly_type`: Label describing the anomaly category.
 
-The project constructs 42 features across the seven telemetry channels, including raw values, differences, rolling variability, deviation from a trailing mean, and unchanged-reading counts.
+The dataset contains **582 labelled anomalies (2.91%)**.
 
-### 2. Baseline model
+## 3. Methodology
 
-An Isolation Forest is trained using normal observations. A normal-only calibration subset is used to establish an anomaly-score threshold.
+### 3.1 Temporal Feature Engineering
 
-### 3. Hybrid detection
+The project constructs 42 features across the seven telemetry channels.
 
-The notebook explores a combination of rule-based and model-based approaches, including drift, freeze, spike, and short-freeze detection. Exploratory variants and threshold comparisons are retained to show the development process.
+These include:
 
-Some rules use future samples or full-run information, so the current implementation is retrospective rather than strictly real-time.
+- Raw sensor values.
+- Differences between consecutive readings.
+- Rolling variability.
+- Deviation from a trailing mean.
+- Counts of unchanged readings.
 
-## Validation diagnostics
+The purpose is to capture both the current sensor state and changes in its recent behaviour.
 
-On the inspected validation segment (timesteps 12,000–15,999):
+### 3.2 Isolation Forest Baseline
+
+An Isolation Forest is used as an unsupervised anomaly-detection baseline.
+
+The model is trained using normal observations. A normal-only calibration subset is used to establish an anomaly-score threshold.
+
+### 3.3 Hybrid Anomaly Detection
+
+The notebook explores a combination of model-based and rule-based detection approaches.
+
+The hybrid approach includes:
+
+- Isolation Forest anomaly scores.
+- Drift detection rules.
+- Frozen-reading detection.
+- Spike detection.
+- Short-freeze detection.
+
+Exploratory model variants and threshold comparisons are retained in the notebook to document the development process.
+
+**Important implementation limitation:** Some rules use future samples or full-run information. These components are retrospective and should not be interpreted as strictly real-time detectors.
+
+## 4. Exploratory Performance Diagnostics
+
+The following results were obtained on the inspected segment covering timesteps **12,000–15,999**.
 
 | Metric | Result |
 |---|---:|
@@ -60,45 +92,97 @@ On the inspected validation segment (timesteps 12,000–15,999):
 | False negatives | 2 |
 | True negatives | 3,833 |
 
+### Understanding the results
+
+- **Precision (0.600):** Approximately 60% of the detected anomalies in this segment were labelled anomalies.
+- **Recall (0.980):** Approximately 98% of the labelled anomalies in this segment were detected.
+- **F1 score (0.744):** A combined measure of precision and recall.
+
 The two missed anomalies were labelled as spikes. False alarms were associated with the drift and freeze rules.
 
-**Important:** this segment was inspected during development and contains no labelled drift anomalies. Detector thresholds were also explored using the test set. These results must not be presented as an unbiased final estimate of generalization.
+> **Evaluation caution:** This segment was inspected during development and contains no labelled drift anomalies. Detector thresholds were also explored using the test set. Consequently, these metrics are exploratory diagnostics and must not be presented as an unbiased estimate of generalisation performance.
 
-## Limitations and future work
+## 5. Limitations and Future Work
 
-- Evaluate on data that has not been used for threshold or detector selection.
-- Assess drift, freeze, and spike performance separately on representative examples.
-- Investigate false alarms and missed anomalies without changing the frozen detector retrospectively.
+Potential improvements include:
+
+- Evaluate the detector on data that has not been used for threshold or detector selection.
+- Assess drift, freeze, and spike detection separately using representative examples.
+- Investigate false alarms and missed anomalies using a separate evaluation procedure.
 - Develop causal alternatives for rules that currently use future observations.
-- Verify that the notebook runs from top to bottom in a fresh environment.
-- Consolidate plots and document the synthetic data-generation process.
+- Verify that the notebook runs from beginning to end in a fresh environment.
+- Further document the synthetic data-generation process.
+- Explore additional anomaly-detection methods and compare their performance fairly.
 
-## Reproducibility
+## 6. Installation and Reproducibility
 
-1. Clone or download the repository.
-2. Install the required Python packages.
-3. Place the dataset at the path expected by the notebook.
-4. Open the notebook in Jupyter.
-5. Restart the kernel and run all cells from top to bottom.
+### Prerequisites
 
-Dependencies used in the notebook include Python, NumPy, pandas, Matplotlib, and scikit-learn. Confirm the exact package versions and dataset path before publishing.
+- Python 3.10 or compatible version.
+- Git.
+- Jupyter Notebook or JupyterLab.
 
-## Project structure
+### Clone the repository
 
-A suggested repository layout:
+```bash
+git clone https://github.com/A2ZRahul/satellite-telemetry-anomaly-detection.git
+cd satellite-telemetry-anomaly-detection
+```
+
+### Create and activate a virtual environment
+
+Windows (Git Bash):
+
+```bash
+python -m venv venv
+source venv/Scripts/activate
+```
+
+### Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### Launch Jupyter Notebook
+
+```bash
+jupyter notebook
+```
+
+Open the main notebook:
+
+`notebooks/satellite_telemetry_anomaly_detection.ipynb`
+
+Restart the kernel and run all cells from top to bottom.
+
+The notebook expects the dataset at:
+
+`data/telemetry.csv`
+
+## 7. Repository Structure
 
 ```text
 satellite-telemetry-anomaly-detection/
+│
 ├── data/
 │   └── telemetry.csv
+│
 ├── notebooks/
-│   └── satellite_telemetry_anomaly_detection_labeled.ipynb
+│   ├── 01_eda..ipynb
+│   └── satellite_telemetry_anomaly_detection.ipynb
+│
+├── src/
+│   └── generate_data.py
+│
+├── .gitignore
 ├── README.md
 └── requirements.txt
 ```
 
-Adjust filenames and paths to match the files actually committed.
+## 8. Disclaimer
 
-## Disclaimer
+This is an educational machine learning project using synthetic satellite telemetry. It is not a flight-qualified anomaly-detection system and has not been validated for operational spacecraft use.
 
-This is an educational project using synthetic telemetry. It is not a flight-qualified anomaly-detection system and has not been validated for operational spacecraft use.
+**Author:** Rahul Panda  
+**GitHub:** [A2ZRahul](https://github.com/A2ZRahul)
